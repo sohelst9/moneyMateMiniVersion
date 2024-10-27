@@ -15,7 +15,7 @@
 
         <div class="btn-container">
           <button class="edit-btn">Edit</button>
-          <button class="delete-btn">Delete</button>
+          <button class="delete-btn" @click="deleteData(data.id)">Delete</button>
         </div>
       </div>
 
@@ -24,22 +24,22 @@
         <div class="add_modal_modal-content">
           <span class="add_modal_close" @click="closeModal">&times;</span>
           <h2>Add Transaction</h2>
-          <form>
+          <form @submit.prevent="TrnxSubmit">
             <div class="add_modal_form-group">
               <label for="type" class="add_modal_label">Type</label>
-              <input type="text" id="type" class="add_modal_input">
+              <input type="text" id="type" v-model="type" class="add_modal_input">
             </div>
             <div class="add_modal_form-group">
               <label for="date" class="add_modal_label">Date</label>
-              <input type="date" id="date" class="add_modal_input">
+              <input type="date" id="date" v-model="date" class="add_modal_input">
             </div>
             <div class="add_modal_form-group">
               <label for="description" class="add_modal_label">Description</label>
-              <input type="text" id="description" required class="add_modal_input">
+              <input type="text" id="description" v-model="description" required class="add_modal_input">
             </div>
             <div class="add_modal_form-group">
               <label for="amount" class="add_modal_label">Amount</label>
-              <input type="number" id="amount" class="add_modal_input">
+              <input type="number" id="amount" v-model="amount" class="add_modal_input">
             </div>
             <button type="submit" class="add_modal_btn">Add Transaction</button>
           </form>
@@ -56,10 +56,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { db } from './firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 const datas = ref([]);
 const loading = ref(true);
 const isModalOpen = ref(false);
+const type = ref('');
+const date = ref('');
+const description = ref('');
+const amount = ref('');
 
 //-- fetch data from firebase but not real time data show
 // onMounted(async () => {
@@ -126,9 +130,44 @@ const openModal = () => {
 }
 
 //--closeModal
-const closeModal = () =>{
+const closeModal = () => {
   isModalOpen.value = false;
 }
+
+//--TrnxSubmit
+const TrnxSubmit = () => {
+  //--call firebase api 
+  try {
+    addDoc(collection(db, "MoneyMate"), {
+      id: uniqueIdGenerate(),
+      type: type.value,
+      date: date.value,
+      description: description.value,
+      amount: amount.value
+    });
+    type.value = '';
+    date.value = '';
+    description.value = '';
+    amount.value = '';
+    closeModal();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+
+//--uniqueIdGenerate
+const uniqueIdGenerate = () => {
+  return Math.random.toString(36).substring(2, 9);
+}
+
+//--deleteData
+const deleteData = (id) => {
+  deleteDoc(doc(collection(db, "MoneyMate"), id));
+}
+
+
+
 </script>
 
 
